@@ -5,7 +5,10 @@ class MarketPolicyGradientModelBuilder(AbstractModelBuilder):
 	def buildModel(self):
 		from keras.models import Model
 		from keras.layers import merge, Convolution2D, MaxPooling2D, Input, Dense, Flatten, Dropout, Reshape, TimeDistributed, BatchNormalization, Merge, merge
-		from keras.layers.advanced_activations import LeakyReLU
+		from keras.layers import Conv2D
+		# from keras.layers.advanced_activations import LeakyReLU
+		from keras.layers import LeakyReLU
+		from keras import backend as K
 
 		B = Input(shape = (3,))
 		b = Dense(5, activation = "relu")(B)
@@ -13,11 +16,12 @@ class MarketPolicyGradientModelBuilder(AbstractModelBuilder):
 		inputs = [B]
 		merges = [b]
 
-		for i in xrange(1):
+		for i in range(1):
 			S = Input(shape=[2, 60, 1])
 			inputs.append(S)
 
-			h = Convolution2D(2048, 3, 1, border_mode = 'valid')(S)
+			# h = Convolution2D(2048, 3, 1, border_mode = 'valid')(S)
+			h = Conv2D(2048, (3, 1), padding="valid", data_format = 'channels_first')(S)
 			h = LeakyReLU(0.001)(h)
 			h = Convolution2D(2048, 5, 1, border_mode = 'valid')(S)
 			h = LeakyReLU(0.001)(h)
@@ -59,7 +63,8 @@ class MarketModelBuilder(AbstractModelBuilder):
 		from keras.models import Model
 		from keras.layers import merge, Convolution2D, MaxPooling2D, Input, Dense, Flatten, Dropout, Reshape, TimeDistributed, BatchNormalization, Merge, merge
 		from keras.layers.advanced_activations import LeakyReLU
-
+		from keras.layers import Conv2D
+		from keras import backend as K
 		dr_rate = 0.0
 
 		B = Input(shape = (3,))
@@ -68,11 +73,15 @@ class MarketModelBuilder(AbstractModelBuilder):
 		inputs = [B]
 		merges = [b]
 
-		for i in xrange(1):
+		for i in range(1):
 			S = Input(shape=[2, 60, 1])
 			inputs.append(S)
 
+			K.set_image_data_format('channels_last')
+			K.set_image_dim_ordering('th')
+
 			h = Convolution2D(64, 3, 1, border_mode = 'valid')(S)
+			# h = Conv2D(64, (3, 1), padding="valid")(S)
 			h = LeakyReLU(0.001)(h)
 			h = Convolution2D(128, 5, 1, border_mode = 'valid')(S)
 			h = LeakyReLU(0.001)(h)

@@ -9,7 +9,9 @@ class MarketEnv(gym.Env):
 
 	PENALTY = 1 #0.999756079
 
-	def __init__(self, dir_path, target_codes, input_codes, start_date, end_date, scope = 60, sudden_death = -1., cumulative_reward = False):
+	def __init__(self, dir_path, target_codes, input_codes, start_date, end_date, scope=60, sudden_death=-1.,
+				 cumulative_reward=False):
+
 		self.startDate = start_date
 		self.endDate = end_date
 		self.scope = scope
@@ -26,13 +28,15 @@ class MarketEnv(gym.Env):
 			data = {}
 			lastClose = 0
 			lastVolume = 0
+
 			try:
 				f = open(fn, "r")
 				for line in f:
 					if line.strip() != "":
 						dt, openPrice, high, low, close, volume = line.strip().split(",")
+
 						try:
-							if dt >= start_date:						
+							if dt >= start_date:
 								high = float(high) if high != "" else float(close)
 								low = float(low) if low != "" else float(close)
 								close = float(close)
@@ -43,8 +47,8 @@ class MarketEnv(gym.Env):
 									high_ = (high - close) / close
 									low_ = (low - close) / close
 									volume_ = (volume - lastVolume) / lastVolume
-									
-									data[dt] = (high_, low_, close_, volume_)
+
+									data[dt] = (high_, low_, close_, volume_) # 전날 종가, 거래량을 가지고 별도 퍼센티지를 구하는데 매핑이 이상하다.
 
 								lastClose = close
 								lastVolume = volume
@@ -61,12 +65,17 @@ class MarketEnv(gym.Env):
 				if code in input_codes:
 					self.inputCodes.append(code)
 
+
+		# open ai 를 적용하는 부분이다. 실제로 이것을 사용하여 environment와 agent등의 상태를 기록하고 사용
+		# action 정의 LONG/SHORT (?)
 		self.actions = [
 			"LONG",
 			"SHORT",
 		]
 
+		# action_space는 위의 딱 2가지 discrete
 		self.action_space = spaces.Discrete(len(self.actions))
+		# 관찰 영역은
 		self.observation_space = spaces.Box(np.ones(scope * (len(input_codes) + 1)) * -1, np.ones(scope * (len(input_codes) + 1)))
 
 		self.reset()
